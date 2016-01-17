@@ -2,21 +2,22 @@
  * Motor Control Version 1
  * 2016-01-16
  */
-
-#include "src/Steer.h"
 #include "src/RTSched.h"
+#include "src/SteerServo.h"
+#include "src/DCMotor.h"
 
-#define MOTOR_PIN 11
 #define DEBUG_
+#undef DEBUG_
 
 void setup() {
-  RTSched_init();
+  RTSched();
 #ifdef DEBUG_
   Serial.begin(9600);
   Serial.setTimeout(50);
   Serial.println("DEBUG mode");
 #endif
-  steer_init();
+  initSteerServo();
+  initDCMotor();
 }
 
 void loop() {
@@ -26,8 +27,6 @@ void loop() {
   Serial.println("Servo angle (0-180): ");
   while(!Serial.available());
   cmd = Serial.parseInt();
-  //shiftangle(cmd);
-  //sv.write(cmd);
   Serial.print("Applied: ");
   Serial.println(cmd);
 #else
