@@ -1,5 +1,5 @@
-#ifndef __STEER_SERVO_H__
-#define __STEER_SERVO_H__
+#ifndef __STEERSERVO_H__
+#define __STEERSERVO_H__
 #include <Servo.h> 
 #include "RTSched.h"
 

@@ -23,12 +23,12 @@ class RTSched
 private:
 	LinkedList<TaskStruct> tim2_task_list;
 public:
+	RTSched();
 	int size();
 	int clear();
 	int add(TaskStruct ts);
 	int remove(int idx);
 	int dispatch();
-	RTSched();
 };
 
 // NOTE: Static class instance
