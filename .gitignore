@@ -1,0 +1,7 @@
+
+# From MAC OS
+.DS_Store
+
+# output files
+*.txt
+
