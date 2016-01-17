@@ -3,8 +3,8 @@
  * 2016-01-16
  */
 
-#include "Steer.h"
-#include "RTSched.h"
+#include "src/Steer.h"
+#include "src/RTSched.h"
 
 #define MOTOR_PIN 11
 #define DEBUG_

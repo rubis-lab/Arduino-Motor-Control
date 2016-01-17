@@ -4,7 +4,7 @@
 #include <avr/interrupt.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <LinkedList.h>
+#include "../lib/LinkedList.h"
 
 // NOTE: timer2 is used in PWM 3, 11, and tone()
 // using this library may trigger unexpected behaviors
