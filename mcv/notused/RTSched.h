@@ -1,10 +1,11 @@
 #ifndef __RTSCHED_H__
 #define __RTSCHED_H__
+#include <Arduino.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include "../lib/LinkedList.h"
+#include "lib/LinkedList.h"
 
 // NOTE: Timer2 is used in PWM 3, 11, and tone()
 // using this library may trigger unexpected behaviors

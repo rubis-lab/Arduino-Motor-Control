@@ -1,5 +1,6 @@
 #ifndef __ISR_H__
 #define __ISR_H__
+#include <Arduino.h>
 #include "RTSched.h"
 
 #define ISR10ms 250

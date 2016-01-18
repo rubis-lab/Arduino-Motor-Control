@@ -2,39 +2,43 @@
  * Motor Control Version 1
  * 2016-01-16
  */
-#include "src/ArduinoI2C.h"
-#include "src/RTSched.h"
-#include "src/SteerServo.h"
-#include "src/DCMotor.h"
+ 
+#include "ArduinoI2C.h"
+#include "SteerServo.h"
+#include "DCMotor.h"
 
-
-#define DEBUG_
-#undef DEBUG_
+#define DEBUG_SERIAL
+#define DEBUG_LED
 
 void setup() {
-  ArduinoI2C();
-  RTSched();
-#ifdef DEBUG_
-  Serial.begin(9600);
+  initArduinoI2C();
+  //initSteerServo();
+  //initDCMotor();
+#ifdef DEBUG_SERIAL
+  Serial.begin(19200);
   Serial.setTimeout(50);
-  Serial.println("DEBUG mode");
+  Serial.println("Serial debug mode");
 #endif
-  initSteerServo();
-  initDCMotor();
+#ifdef DEBUG_LED
+  pinMode(13, OUTPUT);
+  digitalWrite(13, HIGH);
+#endif
 }
-
 void loop() {
-
-#ifdef DEBUG_
-  int cmd;
-  Serial.println("Servo angle (0-180): ");
-  while(!Serial.available());
-  cmd = Serial.parseInt();
-  Serial.print("Applied: ");
-  Serial.println(cmd);
-#else
-
+  if(i2c_type == 1){
+#ifdef DEBUG_LED
+    digitalWrite(13, HIGH);
 #endif
+   //setAngle(i2c_data);
+  }
+  if(i2c_type == 2){
+#ifdef DEBUG_LED
+    digitalWrite(13, LOW);
+#endif
+    //setSpeed(i2c_data);
+  }
 
-
+#ifdef DEBUG_SERIAL
+#endif
+  delay(1000);
 }
