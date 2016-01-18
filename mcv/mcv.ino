@@ -8,12 +8,13 @@
 #include "DCMotor.h"
 
 #define DEBUG_SERIAL
+#undef DEBUG_SERIAL
 #define DEBUG_LED
 
 void setup() {
   initArduinoI2C();
-  //initSteerServo();
-  //initDCMotor();
+  initSteerServo();
+  initDCMotor();
 #ifdef DEBUG_SERIAL
   Serial.begin(19200);
   Serial.setTimeout(50);
@@ -24,21 +25,24 @@ void setup() {
   digitalWrite(13, HIGH);
 #endif
 }
-void loop() {
-  if(i2c_type == 1){
-#ifdef DEBUG_LED
-    digitalWrite(13, HIGH);
-#endif
-   //setAngle(i2c_data);
-  }
-  if(i2c_type == 2){
-#ifdef DEBUG_LED
-    digitalWrite(13, LOW);
-#endif
-    //setSpeed(i2c_data);
-  }
 
+void loop() {
+  if(i2c_status == 0) {
+    if(i2c_type == 1) {
+#ifdef DEBUG_LED
+      digitalWrite(13, HIGH);
+#endif
+      setAngle(i2c_data);
+    }
+    if(i2c_type == 2) {
+#ifdef DEBUG_LED
+      digitalWrite(13, LOW);
+#endif
+      setSpeed(i2c_data);
+    }
+  }
 #ifdef DEBUG_SERIAL
+  //Serial.println("loop cnt");
 #endif
   delay(1000);
 }

@@ -35,12 +35,21 @@ int setServoAngle(int des_angle) {
 int setAngle(int des_angle) {
 	st_sv.write(des_angle);
 	curr_angle = des_angle;
+#ifdef STEER_SERVO_DEBUG
+	Serial.print("Curr angle : ");
+	Serial.println(curr_angle);
+#endif
 	return curr_angle;
 }
 
 
 void initSteerServo() {
 	st_sv.attach(SERVO_PIN);
+	st_sv.write(STEER_SERVO_CENTER);
+#ifdef STEER_SERVO_DEBUG
+	Serial.begin(19200);
+	Serial.println("Steer servo debug mode : ");
+#endif
 	return; 
 }
 
