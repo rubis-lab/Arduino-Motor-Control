@@ -1,4 +1,4 @@
-
+#include "i2c_server.h"
 // The I2C bus: This is for V2 pi's. For V1 Model B you need i2c-0
 static const char *devName = "/dev/i2c-1";
 int file;
@@ -8,7 +8,7 @@ int sendType(int type) {
     unsigned char cmd[16];
 
     if (0 == sscanf(type, "%d", &val)) {
-        fprintf(stderr, "Invalid parameter %d \"%s\"\n", 1, type);
+        //fprintf(stderr, "Invalid parameter %d \"%s\"\n", 1, type);
         exit(1);
     }
 
@@ -30,9 +30,9 @@ int sendData(int data) {
     int val;
     int i, j;
     unsigned char cmd[16];
-    for(i = 2; i < argc; i++) {
+    for(i = 0; i < 1; i++) {
         if (0 == sscanf(data, "%d", &val)) {
-            fprintf(stderr, "Invalid parameter %d \"%s\"\n", i, data);
+            //fprintf(stderr, "Invalid parameter %d \"%s\"\n", i, data);
             exit(1);
         }
         printf("Sending %d\n", val);

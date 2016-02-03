@@ -1,5 +1,5 @@
-#include"SteerControl.h";
-#include"i2c_server.h";
+#include"SteerControl.h"
+#include"i2c_server.h"
 using namespace std;
 
 void test_console(string);

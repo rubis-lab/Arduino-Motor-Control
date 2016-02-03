@@ -1,0 +1,28 @@
+INC_PATH_OPENCV = /home/ubuntu/opencv-2.4.11/include/opencv
+LIB_PATH_OPENCV = /usr/local/lib
+
+LIB_OPTION = -lopencv_core -lopencv_highgui -lopencv_ml -lopencv_imgproc -lpthread 
+
+TARGET=core
+CC  = g++
+CFLAGS = -Wall -O1
+SOURCE = Test.cpp	\
+	AnomalyDetector.cpp	\
+	i2c_server.cpp	\
+	SteerControl.cpp
+
+INCLUDE = -I.
+VPATH=.
+OBJ=$(join $(addsuffix ../obj/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cpp=.o))) 
+DEPENDS=$(join $(addsuffix ../.dep/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cpp=.d)))
+
+all: $(TARGET)
+	@true
+
+
+main :
+	$(CC) -o Test Test.cpp -L$(LIB_PATH_OPENCV) -I$(INC_PATH_OPENCV) $(LIB_OPTION)
+
+clean :
+	@rm -rf *.o main 
+
