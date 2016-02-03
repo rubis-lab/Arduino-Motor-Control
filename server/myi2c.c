@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   int file;
  
   if ((file = open(devName, O_RDWR)) < 0) {
-    //fprintf(stderr, "I2C: Failed to access %d\n", devName);
+    fprintf(stderr, "I2C: Failed to access \n");
     exit(1);
   }
  
