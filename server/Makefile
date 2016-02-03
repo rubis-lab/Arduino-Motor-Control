@@ -1,4 +1,4 @@
-INC_PATH_OPENCV = /home/chchoi/opencv-2.4.9/include/opencv
+INC_PATH_OPENCV = /home/ubuntu/opencv-2.4.11/include/opencv
 LIB_PATH_OPENCV = /usr/local/lib
 
 LIB_OPTION = -lopencv_core -lopencv_highgui -lopencv_ml -lopencv_imgproc -lpthread 

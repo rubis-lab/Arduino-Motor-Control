@@ -15,7 +15,6 @@
 #define ROUND_TRIP_TIME 10000
 
 int i2c_send(int type, int data);
-
 int i2c_init(void);
 
 #endif
