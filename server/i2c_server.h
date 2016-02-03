@@ -1,6 +1,9 @@
 #ifndef __I2C_SERVER_H__
 #define __I2C_SERVER_H__
 
+#define I2C_DEBUG
+#define SERVO_PROTECT_MK1
+
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
