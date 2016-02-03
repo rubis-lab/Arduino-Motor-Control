@@ -1,26 +1,14 @@
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <linux/i2c-dev.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <unistd.h>
- 
-// The PiWeather board i2c address
-#define ADDRESS 0x04
-#define ROUND_TRIP_TIME 10000
- 
+
 // The I2C bus: This is for V2 pi's. For V1 Model B you need i2c-0
 static const char *devName = "/dev/i2c-1";
+int file;
 
-int sendType(int argc, char** argv, int file) {
+int sendType(int type) {
     int val;
     unsigned char cmd[16];
 
-    if (0 == sscanf(argv[1], "%d", &val)) {
-        fprintf(stderr, "Invalid parameter %d \"%s\"\n", 1, argv[1]);
+    if (0 == sscanf(type, "%d", &val)) {
+        fprintf(stderr, "Invalid parameter %d \"%s\"\n", 1, type);
         exit(1);
     }
 
@@ -38,13 +26,13 @@ int sendType(int argc, char** argv, int file) {
     return 1;
 }
 
-int sendData(int argc, char** argv, int file) {
+int sendData(int data) {
     int val;
     int i, j;
     unsigned char cmd[16];
     for(i = 2; i < argc; i++) {
-        if (0 == sscanf(argv[i], "%d", &val)) {
-            fprintf(stderr, "Invalid parameter %d \"%s\"\n", i, argv[i]);
+        if (0 == sscanf(data, "%d", &val)) {
+            fprintf(stderr, "Invalid parameter %d \"%s\"\n", i, data);
             exit(1);
         }
         printf("Sending %d\n", val);
@@ -66,14 +54,13 @@ int sendData(int argc, char** argv, int file) {
     return 1;
 }
 
-int init(int argc, char** argv) {
-    if (argc == 1) {
-        printf("Supply one or more commands to send to the Arduino\n");
-        exit(1);
-    }
+int i2c_send(int type, int data) {
+    sendType(type);
+    sendData(data);
+    return 1;
+}
 
-    printf("I2C: Connecting\n");
-    int file;
+int i2c_init() {
     if ((file = open(devName, O_RDWR)) < 0) {
         //printf(stderr, "I2C: Failed to access %d\n", devName);
         exit(1);
