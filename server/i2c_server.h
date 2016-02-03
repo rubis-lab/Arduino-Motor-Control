@@ -10,15 +10,9 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
- 
-// The PiWeather board i2c address
+
 #define ADDRESS 0x04
 #define ROUND_TRIP_TIME 10000
-
-/*
-int sendType(int type);
-int sendData(int data);
-*/
 
 int i2c_send(int type, int data);
 

@@ -73,7 +73,7 @@ int i2c_init() {
     }
     return file;
 }
-
+/*
 int main(int argc, char** argv) {
     int file = init(argc, argv);
     sendType(argc, argv, file);
@@ -82,3 +82,4 @@ int main(int argc, char** argv) {
     close(file);
     return EXIT_SUCCESS;
 }
+*/
