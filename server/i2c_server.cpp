@@ -6,11 +6,7 @@ int file;
 int sendType(int type) {
     int val;
     unsigned char cmd[16];
-
-    if (0 == sscanf(type, "%d", &val)) {
-        //fprintf(stderr, "Invalid parameter %d \"%s\"\n", 1, type);
-        exit(1);
-    }
+    val = type;
 
     printf("Sending %d\n", val);
     cmd[0] = val;
@@ -30,11 +26,8 @@ int sendData(int data) {
     int val;
     int i, j;
     unsigned char cmd[16];
+    val = data;
     for(i = 0; i < 1; i++) {
-        if (0 == sscanf(data, "%d", &val)) {
-            //fprintf(stderr, "Invalid parameter %d \"%s\"\n", i, data);
-            exit(1);
-        }
         printf("Sending %d\n", val);
 
         for(j = 0; j < 2; j++) {

@@ -199,8 +199,8 @@ int LaneDetect(IplImage* pSrc, IplImage* pDst)
 			p[2] = pSrc->imageData[pSrc->widthStep * y + x * 3 + 2]; // R 
 
 			pSrc->imageData[pSrc->widthStep * y + x * 3] = 255 - p[0];
-			pSrc->imageData[pSrc->widthStep * y + x * 3 + 1] = 255 - p[1];
-			pSrc->imageData[pSrc->widthStep * y + x * 3 + 2] = 255;
+			pSrc->imageData[pSrc->widthStep * y + x * 3 + 1] = 255;
+			pSrc->imageData[pSrc->widthStep * y + x * 3 + 2] = 255 - p[2];
 		}
 	}
 
@@ -294,6 +294,7 @@ int LaneDetect(IplImage* pSrc, IplImage* pDst)
 	cvReleaseImage(&pMagnitude2);
 	cvReleaseImage(&pMagnitude);
 	cvReleaseImage(&pOrientation);
+	cvWaitKey(10);
 
 	return ret;
 }

@@ -3,6 +3,7 @@
 #include <math.h>
 #include <cv.h>
 #include <highgui.h>
+//#include "~/Documents/opencv-2.4.11/include/opencv/highgui.h"
 
 struct sPoint {
 	int x, y;
