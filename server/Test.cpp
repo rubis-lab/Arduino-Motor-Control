@@ -22,31 +22,33 @@ void test_onBoard(string configDirectory = "")
 	if(configDirectory.compare("") != 0){ steerController.readConfig(configDirectory); }
 	printf("config done\n");
 
-	//i2c_init();
+	i2c_init();
 	printf("i2c init done\n");
-	double offset = 0.0;
 
 	int ret = 0;
+	int angle = 90;
 	
 	initLD();
 	while(1)
 	{
-		ret = laneDetect();
-		printf("%d\n", ret);
-	}
-
-	while(1)
-	{
-		//printf("in while\n");
 		/*
-		TODO : get a offset data from vision processor
-		ex) offset = get_offset_from_vision();
+		printf("%d\n", ret);
+		if(ret < 128) {
+			i2c_send(1, 85);
+		}
+		if(ret > 128) {
+			i2c_send(1, 95);
+		}
 		*/
-		if(steerController.calculate(offset))
+		ret = laneDetect();
+
+		if(steerController.calculate((double) ret))
 		{
-			int angleChange = steerController.getControlAngle() + 90;
+			angle += steerController.getControlAngle();
+			//printf("angle : %d\n", angle);
 			
-			//i2c_send(1, angleChange);
+			i2c_send(1, angle);
 		}
 	}
+	i2c_exit();
 }

@@ -48,4 +48,8 @@ public:
 	bool readConfig(std::string configDirectory);
 
 	int getControlAngle();
+
+	int getAbsAngle();
+
+	int getLastAngle();
 };

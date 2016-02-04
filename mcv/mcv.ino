@@ -22,7 +22,7 @@ void setup() {
 #endif
 #ifdef DEBUG_LED
   pinMode(13, OUTPUT);
-  digitalWrite(13, HIGH);
+  digitalWrite(13, LOW);
 #endif
 }
 

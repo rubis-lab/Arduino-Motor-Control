@@ -276,10 +276,6 @@ int LaneDetect(IplImage* pSrc, IplImage* pDst)
 			sort(cPoint.begin(), cPoint.end(), lessY);
 			cvCircle (pDst, cvPoint((cPoint[0].x+cPoint[1].x)/2, (cPoint[0].y+cPoint[1].y)/2), 5, CV_RGB(255,255,255), 3, 8);
 			ret = 320 - (cPoint[0].x+cPoint[1].x)/2;
-			if(ret < 0)
-			{
-				ret = ret * -1;
-			}
 		}
 
 		cvReleaseMemStorage (&storage2);

@@ -44,12 +44,14 @@ bool SteerControl::calculate(double newCurrentOffset)
 		double currentOffset = newCurrentOffset - (velocityFactor * sampleTime * sin(absAngle * M_PI / 180));
 		integralTerm += ki * currentOffset * sampleTime;
 		double derivateError;
-		
+
+		/*
 		//filter off anomaly
 		if(isFiltering && anomalyDetector->updateStatistic(newCurrentOffset))
 		{
 			currentOffset = lastOffset;
 		}
+		*/
 
 		//removes initial oscillation when calculation times less than 5
 		if(calculatorCount < 10)
@@ -99,7 +101,7 @@ bool SteerControl::calculate(double newCurrentOffset)
 
 		controlAngle = angleChange;
 		lastAngle += controlAngle;
-		absAngle += lastAngle;
+		absAngle = lastAngle;
 	}
 	else
 	{
@@ -277,4 +279,14 @@ void SteerControl::setVelocityFactor(double newVelocityFactor)
 int SteerControl::getControlAngle()
 {
 	return controlAngle;
+}
+
+int SteerControl::getAbsAngle()
+{
+	return absAngle;
+}
+
+int SteerControl::getLastAngle()
+{
+	return lastAngle;
 }

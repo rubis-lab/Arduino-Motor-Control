@@ -8,6 +8,7 @@
 #define DC_MOTOR_SENSITIVITY 5
 
 #define DC_MOTOR_DEBUG
+#undef DC_MOTOR_DEBUG
 
 int setMotorSpeed(int des_speed);
 int setSpeed(int des_speed); 
