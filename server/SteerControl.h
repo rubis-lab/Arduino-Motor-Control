@@ -1,5 +1,5 @@
 #include<string>
-#include"AnomalyDetector.h"
+#include"KFilter.h"
 
 class SteerControl{
 
@@ -20,14 +20,9 @@ private:
 
 	int calculatorCount;
 
-	AnomalyDetector* anomalyDetector;
-
-	bool isFiltering;
+	KFilter* filter;
 
 	int floor(double value);
-
-	double filterThreshold, filterAverage, filterVariant, filterRatio;
-
 public:
 	SteerControl();
 

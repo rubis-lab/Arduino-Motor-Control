@@ -20,12 +20,12 @@ SteerControl::SteerControl()
 	controlAngleLimit = 20;
 	lastAngle = 0;
 	calculatorCount = 0;
-	isFiltering = false;
+	filter = NULL;
 }
 
 SteerControl::~SteerControl()
 {
-	if(isFiltering){ delete anomalyDetector; }
+	if(filter != NULL){ delete filter; }
 }
 
 int SteerControl::floor(double value)
@@ -40,20 +40,18 @@ bool SteerControl::calculate(double newCurrentOffset)
 
 	if(currentTime >= 0 && elapsedTime >= sampleTime)
 	{
+		//filter off offset
+		if(filter != NULL)
+		{
+			newCurrentOffset = filter->runFilter(newCurrentOffset, lastOffset - (velocityFactor * sampleTime * sin(absAngle * M_PI / 180)));
+		}
+
 		//PID control factors
 		double currentOffset = newCurrentOffset - (velocityFactor * sampleTime * sin(absAngle * M_PI / 180));
 		integralTerm += ki * currentOffset * sampleTime;
 		double derivateError;
 
-		/*
-		//filter off anomaly
-		if(isFiltering && anomalyDetector->updateStatistic(newCurrentOffset))
-		{
-			currentOffset = lastOffset;
-		}
-		*/
-
-		//removes initial oscillation when calculation times less than 5
+		//removes initial oscillation when calculation times less than 10
 		if(calculatorCount < 10)
 		{
 			derivateError = 0;
@@ -70,36 +68,41 @@ bool SteerControl::calculate(double newCurrentOffset)
 
 		//sums PID control output
 		double pidOutput = (kp * currentOffset) + (integralTerm) + (kd * derivateError);
+
 		
-		//limits wheel angle
-		double minOutput = velocityFactor * sampleTime * sin(- (signed int) controlAngleLimit * M_PI / 180);
-		double maxOutput = velocityFactor * sampleTime * sin((signed int) controlAngleLimit * M_PI / 180);
+		//limits wheel angle change
+		double minOutput = velocityFactor * sampleTime * sin(- (signed int) absAngleLimit * M_PI / 180);
+		double maxOutput = velocityFactor * sampleTime * sin((signed int) absAngleLimit * M_PI / 180);
 
 		if(pidOutput < minOutput)
 		{
 			if(integralTerm < minOutput){ integralTerm = minOutput; }
 			pidOutput = minOutput;
+			printf("minimum output violated\n");
 		}
 		else if(pidOutput > maxOutput)
 		{
 			if(integralTerm > maxOutput){ integralTerm = maxOutput; }
 			pidOutput = maxOutput;
+			printf("maximum output violated\n");
 		}
+		
+		printf("PID output : %f\n", pidOutput);
 
 		//get relative controlled angle and update last angle
-		int angleChange = floor(asin(pidOutput / (velocityFactor * sampleTime)) * 180 / M_PI) - lastAngle;
+		controlAngle = floor(asin(pidOutput / (velocityFactor * sampleTime)) * 180 / M_PI) - lastAngle;
+		printf("absAngle limit : %d ~ %d\n", absAngleLimit + 90, - absAngleLimit + 90);
 
 		//limits absolute(top-view) angle
-		if(absAngle + lastAngle + angleChange > (signed int) absAngleLimit)
+		if(absAngle + controlAngle > (signed int) absAngleLimit)
 		{
-			angleChange = (signed int) absAngleLimit - absAngle - lastAngle;
+			controlAngle = (signed int) absAngleLimit - absAngle;
 		}
-		else if(absAngle + lastAngle + angleChange < - (signed int) absAngleLimit)
+		else if(absAngle + controlAngle < - (signed int) absAngleLimit)
 		{
-			angleChange = - (signed int) absAngleLimit - absAngle - lastAngle;
+			controlAngle = - (signed int) absAngleLimit - absAngle;
 		}
 
-		controlAngle = angleChange;
 		lastAngle += controlAngle;
 		absAngle = lastAngle;
 	}
@@ -128,6 +131,7 @@ void SteerControl::setSampleTime(double newSampleTime)
 void SteerControl::setControlAngleLimit(unsigned int newControlAngleLimit)
 {
 	controlAngleLimit = newControlAngleLimit;
+	/*
 	double minOutput = velocityFactor * sampleTime * sin(- (signed int) controlAngleLimit * M_PI / 180);
 	double maxOutput = velocityFactor * sampleTime * sin((signed int) controlAngleLimit * M_PI / 180);
 		
@@ -136,6 +140,7 @@ void SteerControl::setControlAngleLimit(unsigned int newControlAngleLimit)
 
 	if(integralTerm < minOutput){ integralTerm = minOutput; }
 	else if(integralTerm > maxOutput){ integralTerm = maxOutput; }
+	*/
 }
 
 void SteerControl::setAbsAngleLimit(unsigned int newAbsAngleLimit)
@@ -164,11 +169,8 @@ bool SteerControl::readConfig(std::string configDirectory)
 	double newVelocityFactor = velocityFactor;
 	double newControlAngleLimit = controlAngleLimit;
 	double newAbsAngleLimit = absAngleLimit;
-	
-	double newFilterThreshold = -1;
-	double newFilterAverage = -1;
-	double newFilterVariant = -1;
-	double newFilterRatio = -1;
+	double newAverageNoise = 0.0;
+	double newInitialObserved = 0.0;
 
 	//defines name of each control set
 	std::string pidSet = "[PIDControlSettings]";
@@ -179,11 +181,8 @@ bool SteerControl::readConfig(std::string configDirectory)
 	std::string velocityFactorSet = "Velocity_Factor";
 	std::string controlAngleLimitSet = "Control_Angle_Limit";
 	std::string absAngleLimitSet = "Absolute_Angle_Limit";
-
-	std::string filterThresholdSet = "Anomaly_Threshold";
-	std::string filterAverageSet = "Anomaly_Average";
-	std::string filterVariantSet = "Anomaly_Variant";
-	std::string filterRatioSet = "Anomaly_Ratio";
+	std::string averageNoiseSet = "Filter_Average_Noise";
+	std::string initialObservedSet = "Filter_Initial_Observed";
 
 	std::ifstream fin;
 	std::string controlSet = "";
@@ -192,11 +191,13 @@ bool SteerControl::readConfig(std::string configDirectory)
 	fin.open(configDirectory);
 	if(fin.fail()){ return false; }
 
-	while(controlSet.compare(pidSet) != 0)
+
+	while(controlSet.compare(pidSet) != 1)
 	{
 		if(fin.eof()){ return false; }
 		std::getline(fin, controlSet);
 	}
+
 
 	//get line by line for each "Control_Set = value" statement
 	std::getline(fin, controlSet);
@@ -234,21 +235,13 @@ bool SteerControl::readConfig(std::string configDirectory)
 		{
 			newAbsAngleLimit = std::stoi(value);
 		}
-		else if (controlSet.find(filterThresholdSet) != std::string::npos)
+		else if (controlSet.find(averageNoiseSet) != std::string::npos)
 		{
-			newFilterThreshold = std::stod(value);
+			newAverageNoise = std::stod(value);
 		}
-		else if (controlSet.find(filterAverageSet) != std::string::npos)
+		else if (controlSet.find(initialObservedSet) != std::string::npos)
 		{
-			newFilterAverage = std::stod(value);
-		}
-		else if (controlSet.find(filterVariantSet) != std::string::npos)
-		{
-			newFilterVariant = std::stod(value);
-		}
-		else if (controlSet.find(filterRatioSet) != std::string::npos)
-		{
-			newFilterRatio = std::stod(value);
+			newInitialObserved = std::stod(value);
 		}
 		std::getline(fin, controlSet);
 	}
@@ -262,10 +255,9 @@ bool SteerControl::readConfig(std::string configDirectory)
 	setAbsAngleLimit(newAbsAngleLimit);
 	setVelocityFactor(newVelocityFactor);
 
-	if(!isFiltering && newFilterThreshold != -1 && newFilterAverage != -1 && newFilterVariant != -1 && newFilterRatio != -1)
+	if(filter == NULL)
 	{
-		isFiltering = true;
-		anomalyDetector = new AnomalyDetector(newFilterThreshold, newFilterAverage, newFilterVariant, newFilterRatio);
+		filter = new KFilter(newAverageNoise, newInitialObserved);
 	}
 
 	return true;

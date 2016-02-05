@@ -20,6 +20,11 @@ bool lessY(const sPoint& lhs, const sPoint& rhs)
 	return lhs.y < rhs.y;
 }
 
+bool moreY(const sPoint& lhs, const sPoint& rhs)
+{
+	return lhs.y > rhs.y;
+}
+
 inline double DeltaRad (double ang1, double ang2)
 {
 	double da = ang1 - ang2;
@@ -136,7 +141,7 @@ void LaneCandidate(IplImage *mag, IplImage *ori, IplImage *dst)
 			}
 		}
 
-		const double lane_width_max = 30.;
+		const double lane_width_max = 50.;
 		double lane_width = h*lane_width_max/mag->height;
 		int lane_width_lo = -3 + (int)(lane_width*0.8);
 		int lane_width_hi = 3 + (int)(lane_width*1.2);

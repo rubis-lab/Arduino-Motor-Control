@@ -5,7 +5,7 @@ LIBS = `pkg-config --libs opencv`
 
 #sources
 SOURCE = Test.cpp	\
-	AnomalyDetector.cpp	\
+	KFilter.cpp	\
 	i2c_server.cpp	\
 	SteerControl.cpp \
 	LaneDetect/laneDetect.cpp
