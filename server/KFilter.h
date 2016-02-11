@@ -10,6 +10,7 @@ private:
 	double predictionError;
 
 	double kalmanGain;
+
 public:
 	KFilter(double newAverageNoise, double initialObserved);
 

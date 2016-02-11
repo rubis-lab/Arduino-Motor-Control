@@ -14,15 +14,20 @@ private:
 
 	double integralTerm;
 
-	int lastAngle, controlAngle, absAngle;
+	int absAngle, controlAngle;
 	
-	unsigned int controlAngleLimit, absAngleLimit;
+	unsigned int absAngleLimit;
 
 	int calculatorCount;
 
 	KFilter* filter;
 
 	int floor(double value);
+
+	double calculatePid(double newCurrentOffset);
+
+	double applyLimits(double newPidOutput);
+
 public:
 	SteerControl();
 
@@ -42,9 +47,7 @@ public:
 
 	bool readConfig(std::string configDirectory);
 
-	int getControlAngle();
-
 	int getAbsAngle();
 
-	int getLastAngle();
+	int getControlAngle();
 };
