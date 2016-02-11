@@ -38,8 +38,6 @@ public:
 	void tune(double newKp, double newKi, double newKd);
 	
 	void setSampleTime(double newSampleTime);
-	
-	void setControlAngleLimit(unsigned int newControlAngleLimit);
 
 	void setAbsAngleLimit(unsigned int newAbsAngleLimit);
 
