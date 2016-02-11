@@ -2,11 +2,11 @@
 
 KFilter::KFilter(double newAverageNoise, double initialObserved)
 {
-		averageNoise = newAverageNoise;
-		observed = initialObserved;
-		estimated = observed;
-		predictionError = 1.0;
-		kalmanGain = 0.0;
+	averageNoise = newAverageNoise;
+	observed = initialObserved;
+	estimated = observed;
+	predictionError = 1.0;
+	kalmanGain = 0.0;
 }
 
 double KFilter::runFilter(double newObserved, double newEstimated)
