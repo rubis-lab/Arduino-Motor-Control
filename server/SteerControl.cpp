@@ -18,6 +18,8 @@ SteerControl::SteerControl()
 	controlAngle = 0;
 	absAngleLimit = 80;
 	calculatorCount = 0;
+	filteredOffset = 0.0;
+	lastPidOutput = 0.0;
 	filter = NULL;
 }
 
@@ -73,6 +75,7 @@ double SteerControl::applyLimits(double newPidOutput)
 		pidOutput = maxOutput;
 	}
 
+	lastPidOutput = pidOutput;
 	return pidOutput;
 }
 
@@ -86,7 +89,9 @@ bool SteerControl::calculate(double newCurrentOffset)
 		//filter off offset
 		if(filter != NULL)
 		{
-			newCurrentOffset = filter->runFilter(newCurrentOffset, lastOffset - (velocityFactor * sampleTime * sin(absAngle * M_PI / 180)));
+			//newCurrentOffset = filter->runFilter(newCurrentOffset, lastOffset - (velocityFactor * sampleTime * sin(absAngle * M_PI / 180)));
+			newCurrentOffset = filter->runFilter(newCurrentOffset * 2.0, lastOffset);
+			filteredOffset = (calculatorCount < 40)? 0.0 : newCurrentOffset;
 		}
 
 		//cacluate PID control output
@@ -172,6 +177,8 @@ bool SteerControl::readConfig(std::string configDirectory)
 	std::string filterAverageNoiseSet = "Filter_Average_Noise";
 	std::string filterInitialObservedSet = "Filter_Initial_Observed";
 
+	bool filterFlag = false;
+
 	std::ifstream fin;
 	std::string controlSet = "";
 
@@ -220,10 +227,12 @@ bool SteerControl::readConfig(std::string configDirectory)
 		else if (controlSet.find(filterAverageNoiseSet) != std::string::npos)
 		{
 			newAverageNoise = std::stod(value);
+			filterFlag = true;
 		}
 		else if (controlSet.find(filterInitialObservedSet) != std::string::npos)
 		{
 			newInitialObserved = std::stod(value);
+			filterFlag = true;
 		}
 		std::getline(fin, controlSet);
 	}
@@ -236,7 +245,7 @@ bool SteerControl::readConfig(std::string configDirectory)
 	setAbsAngleLimit(newAbsAngleLimit);
 	setVelocityFactor(newVelocityFactor);
 
-	if(filter == NULL)
+	if(filter == NULL && filterFlag)
 	{
 		filter = new KFilter(newAverageNoise, newInitialObserved);
 	}
@@ -257,4 +266,14 @@ int SteerControl::getAbsAngle()
 int SteerControl::getControlAngle()
 {
 	return controlAngle;
+}
+
+double SteerControl::getFilteredOffset()
+{
+	return lastOffset;
+}
+
+double SteerControl::getPidOutput()
+{
+	return lastPidOutput;
 }

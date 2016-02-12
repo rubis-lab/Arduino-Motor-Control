@@ -33,24 +33,17 @@ void test_onBoard(string configDirectory = "")
 	initLD();
 	while(1)
 	{
-		/*
-		printf("%d\n", ret);
-		if(ret < 128) {
-			i2c_send(1, 85);
-		}
-		if(ret > 128) {
-			i2c_send(1, 95);
-		}
-		*/
 		ret = laneDetect();
 
 		if(steerController.calculate((double) ret))
 		{
-			angle = 90 + steerController.getAbsAngle();
-			int cAngle = steerController.getControlAngle();
-			printf("Current angle : %d\n", angle);
-			printf("angle change : %d\n", cAngle);
-		
+			printf("angle\t: %d\n", angle);
+
+			angle = steerController.getAbsAngle() * 2 + 90;
+			printf("offset\t: %f\n", steerController.getFilteredOffset());
+			printf("PID_out\t: %f\n", steerController.getPidOutput());
+			printf("target_angle\t: %d\n\n", angle);
+
 			i2c_send(1, angle);
 		}
 	}

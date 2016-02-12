@@ -87,7 +87,7 @@ int i2c_send(int type, int data) {
 
 void* i2c_manager(void *ptr) {
     (void) ptr;
-    void *sksk = NULL;
+    //void *sksk = NULL;
 #ifdef I2C_DEBUG
     printf("thread created\n");
 #endif

@@ -104,7 +104,7 @@ void LaneCandidate(IplImage *mag, IplImage *ori, IplImage *dst)
 
 	//CvPoint pts[3] = { {0, mag->height}, {mag->width/2, 0}, {mag->width, mag->height} };
 	//cvFillConvexPoly (mask, &pts[0], 3, cvScalar(255));
-	CvPoint pts[4] = { {0, mag->height}, {mag->width/6, 0}, {mag->width*5/6, 0}, {mag->width, mag->height} };
+	CvPoint pts[4] = { {0, mag->height}, {mag->width/9, 0}, {mag->width*8/9, 0}, {mag->width, mag->height} };
 	cvFillConvexPoly (mask, &pts[0], 4, cvScalar(255));
 
 	vector<sLaneCand> tmp;
@@ -143,8 +143,8 @@ void LaneCandidate(IplImage *mag, IplImage *ori, IplImage *dst)
 
 		const double lane_width_max = 50.;
 		double lane_width = h*lane_width_max/mag->height;
-		int lane_width_lo = -3 + (int)(lane_width*0.8);
-		int lane_width_hi = 3 + (int)(lane_width*1.2);
+		int lane_width_lo = -3 + (int)(lane_width*0.2);
+		int lane_width_hi = 3 + (int)(lane_width*1.8);
 
 		const float mag_threshold = 0.2f;
 		const float ori_threshold = 0.5f;
@@ -187,6 +187,8 @@ void LaneCandidate(IplImage *mag, IplImage *ori, IplImage *dst)
 
 	cvReleaseImage (&mask);
 }
+
+int nCount, gAvgX, gAvgY, prevX, prevY;
 
 int LaneDetect(IplImage* pSrc, IplImage* pDst)
 {
@@ -235,7 +237,8 @@ int LaneDetect(IplImage* pSrc, IplImage* pDst)
 
 	CvMemStorage* storage = cvCreateMemStorage(0);
 
-	CvSeq* lines = cvHoughLines2(pMagnitude2, storage, CV_HOUGH_PROBABILISTIC, 1, CV_PI/180, 5, 2, 10);
+	//CvSeq* lines = cvHoughLines2(pMagnitude2, storage, CV_HOUGH_PROBABILISTIC, 1, CV_PI/180, 5, 2, 10);
+	CvSeq* lines = cvHoughLines2(pMagnitude2, storage, CV_HOUGH_PROBABILISTIC, 1, CV_PI/180, 50, 50, 30);
 	for(int i = 0; i < lines->total; i++)
 	{
 		CvPoint* line = (CvPoint*)cvGetSeqElem(lines, i);
@@ -251,7 +254,6 @@ int LaneDetect(IplImage* pSrc, IplImage* pDst)
 	CvMemStorage* storage2 = cvCreateMemStorage(0);
 	CvPoint pt0;
 	CvSeq* ptseq = cvCreateSeq(CV_SEQ_KIND_GENERIC | CV_32SC2, sizeof(CvContour), sizeof(CvPoint), storage2);
-
 	for (unsigned int i=0; i<inlier.size(); i++) { 
 		cvLine (pDraw, cvPoint(inlier[i].sx, inlier[i].sy), cvPoint(inlier[i].ex, inlier[i].ey), CV_RGB(0,255,0), 3, 8);
 		pt0.x = inlier[i].sx; pt0.y = inlier[i].sy;
@@ -267,25 +269,148 @@ int LaneDetect(IplImage* pSrc, IplImage* pDst)
 		CvSeq* hull = cvConvexHull2(ptseq, 0, CV_COUNTER_CLOCKWISE, 0);
 		int hullcount = hull->total;
 
+		CvFont Font;
+		cvInitFont(&Font, CV_FONT_HERSHEY_PLAIN, 1.0f, 1.0f);
+		char temp[256] = {0, };
 		pt0 = **CV_GET_SEQ_ELEM(CvPoint*, hull, hullcount-1);
 		for (int i = 0; i < hullcount; i++)
 		{			
 			cPoint.push_back(sPoint(pt0.x, pt0.y));
+			
 			CvPoint pt = **CV_GET_SEQ_ELEM(CvPoint*, hull, i);
 			cvLine (pDraw, pt0, pt, CV_RGB(255, 0, 0));		
 			pt0 = pt;
 		}
 
-		if(cPoint.size() > 2)
+		if(cPoint.size() > 2 && lines->total >= 2)
 		{
-			sort(cPoint.begin(), cPoint.end(), lessY);
-			cvCircle (pDst, cvPoint((cPoint[0].x+cPoint[1].x)/2, (cPoint[0].y+cPoint[1].y)/2), 5, CV_RGB(255,255,255), 3, 8);
-			ret = 320 - (cPoint[0].x+cPoint[1].x)/2;
+			//cSPoint : 4 rectangular points;
+			// index 0 : top-left
+			// index 1 : top-right
+			// index 2 : bottom-right
+			// index 3 : bottom-left
+			vector<sPoint> cSPoint = vector<sPoint>(4);
+
+			int avgX = 0;
+			int avgY = 0;
+			int minX = 640;
+			int minX2 = 640;
+			int maxX = 0;
+			int maxX2 = 0;
+
+			int bottomLeftIdx = 0;
+			int bottomRightIdx = 0;
+			int topLeftIdx = 0;
+			int topRightIdx = 0;
+
+	
+			for(int i = 0; i < cPoint.size(); i++)
+			{
+				// find average points
+				avgX += cPoint[i].x;
+				avgY += cPoint[i].y;
+
+				// find two mininum x pionts
+				if (cPoint[i].x < minX2)
+				{
+					if (cPoint[i].x < minX)
+					{
+						minX2 = minX;
+						minX = cPoint[i].x;
+						topLeftIdx = bottomLeftIdx;
+						bottomLeftIdx = i;
+					}
+					else
+					{
+						minX2 = cPoint[i].x;
+						topLeftIdx = i;
+					}
+				}
+
+				// find two maximum x points
+				if (cPoint[i].x > maxX2)
+				{
+					if (cPoint[i].x > maxX)
+					{
+						maxX2 = maxX;
+						maxX = cPoint[i]. x;
+						topRightIdx = bottomRightIdx;
+						bottomRightIdx = i;
+					}
+					else
+					{
+						maxX2 = cPoint[i].x;
+						topRightIdx = i;
+					}
+				}
+			}
+			//cvCircle (pDst, cvPoint((cPoint[0].x+cPoint[1].x)/2, (cPoint[0].y+cPoint[1].y)/2), 5, CV_RGB(255,255,255), 3, 8);
+			//ret = 320 - (cPoint[0].x+cPoint[1].x)/2;
+			avgX = avgX / cPoint.size();
+			avgY = avgY / cPoint.size();
+			//int avgX = (cPoint[0].x+cPoint[1].x)/2;
+			//int avgY = (cPoint[0].y+cPoint[1].y)/2;	
+			//printf("avgX : %d, avgY : %d\n", avgX, avgY);
+
+			// determine top bottom points
+			if (cPoint[topLeftIdx].y > cPoint[bottomLeftIdx].y)
+			{
+				int temp = topLeftIdx;
+				topLeftIdx = bottomLeftIdx;
+				bottomLeftIdx = temp;
+			}
+			if (cPoint[topRightIdx].y > cPoint[bottomRightIdx].y)
+			{
+				int temp = topRightIdx;
+				topRightIdx = bottomRightIdx;
+				bottomRightIdx = temp;
+			}
+	
+			//top-left0
+			cSPoint[0] = cPoint[topLeftIdx];
+			//top-right1
+			cSPoint[1] = cPoint[topRightIdx];
+			//bottom-right2
+			cSPoint[2] = cPoint[bottomRightIdx];
+			//bottom-left3
+			cSPoint[3] = cPoint[bottomLeftIdx];
+
+			// draw detected points
+			for (int i = 0; i < cSPoint.size() ;i++)
+			{
+				sprintf(temp, "%d.(%d, %d)", i, cSPoint[i].x, cSPoint[i].y);
+				cvPutText(pDst, temp, cvPoint(cSPoint[i].x, cSPoint[i].y), &Font, cvScalar(0, 0, 255));
+			}
+
+			// calculate centerpoint
+			double dXL = cSPoint[0].x - cSPoint[3].x;
+			double dYL = cSPoint[0].y - cSPoint[3].y;
+			double dXR = cSPoint[1].x - cSPoint[2].x;
+			double dYR = cSPoint[1].y - cSPoint[2].y;
+
+			if(dYL && dYR)
+			{
+				double xL = (dXL*280 - dXL*cSPoint[3].y + dYL*cSPoint[3].x) / dYL;
+				double xR = (dXR*280 - dXR*cSPoint[2].y + dYR*cSPoint[2].x) / dYR;
+				cvCircle (pDst, cvPoint(int((xL+xR)/2), 280), 5, CV_RGB(0,0,0), 3, 8);
+				ret = 320 -((xL+xR)/2);
+			}
+
+			//sort(cPoint.begin(), cPoint.end(), lessY);
+	
+			if(abs(avgX - prevX) > 30 || abs(avgY - prevY) > 30)
+			{
+				prevX = avgX;
+				prevY = avgY;
+			}
+			cvCircle (pDst, cvPoint(prevX, prevY), 5, CV_RGB(255,255,255), 3, 8);	
+			//ret = 320 - prevX;		
+			//cvCircle (pDst, cvPoint(avgX, avgY), 5, CV_RGB(255,255,255), 3, 8);			
+			//ret = 320 - avgX;
 		}
 
 		cvReleaseMemStorage (&storage2);
 	}
-
 	cvShowImage("result", pDst);
 
 	cvReleaseImage(&pGray);
@@ -308,6 +433,11 @@ int initLD(void)
 		printf("Can't open CAMERA\n");
 		return -1;
 	}
+	nCount = 0;
+	gAvgX = 0;
+	gAvgY = 0;
+	prevX = -100;
+	prevY = -100;
 	return 0;
 }
 
@@ -316,7 +446,7 @@ int laneDetect(void)
 	IplImage* pSrc = cvQueryFrame(pCapture);
 	if(pSrc)
 	{
-		CvRect ROI = cvRect(0, 100, 640, 330);
+		CvRect ROI = cvRect(0, 0, 640, 480);
 		cvSetImageROI(pSrc, ROI);
 		IplImage* pSrcROI = cvCreateImage(cvSize(ROI.width, ROI.height), pSrc->depth, pSrc->nChannels);
 		cvCopy(pSrc, pSrcROI);

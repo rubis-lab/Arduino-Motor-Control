@@ -20,6 +20,10 @@ private:
 
 	int calculatorCount;
 
+	double filteredOffset;
+
+	double lastPidOutput;
+
 	KFilter* filter;
 
 	int floor(double value);
@@ -48,4 +52,8 @@ public:
 	int getAbsAngle();
 
 	int getControlAngle();
+
+	double getPidOutput();
+
+	double getFilteredOffset();
 };

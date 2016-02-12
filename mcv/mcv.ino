@@ -22,7 +22,7 @@ void setup() {
 #endif
 #ifdef DEBUG_LED
   pinMode(13, OUTPUT);
-  digitalWrite(13, LOW);
+  digitalWrite(13, HIGH);
 #endif
 }
 
@@ -44,5 +44,5 @@ void loop() {
 #ifdef DEBUG_SERIAL
   //Serial.println("loop cnt");
 #endif
-  delay(1000);
+  delay(100);
 }
