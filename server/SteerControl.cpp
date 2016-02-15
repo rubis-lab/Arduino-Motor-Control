@@ -93,7 +93,7 @@ bool SteerControl::calculate(double newCurrentOffset)
 			if(calculatorCount == 0)
 			{
 				int i;
-				for(i = 0; i < 100; i++)
+				for(i = 0; i < 50; i++)
 					{ filter->runFilter(lastOffset, lastOffset); }
 			}
 			//newCurrentOffset = filter->runFilter(newCurrentOffset, lastOffset - (velocityFactor * sampleTime * sin(absAngle * M_PI / 180)));
