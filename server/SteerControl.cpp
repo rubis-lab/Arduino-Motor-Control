@@ -89,9 +89,16 @@ bool SteerControl::calculate(double newCurrentOffset)
 		//filter off offset
 		if(filter != NULL)
 		{
+			//Kalman filter manually stablized by providing constant offsets
+			if(calculatorCount == 0)
+			{
+				int i;
+				for(i = 0; i < 100; i++)
+					{ filter->runFilter(lastOffset, lastOffset); }
+			}
 			//newCurrentOffset = filter->runFilter(newCurrentOffset, lastOffset - (velocityFactor * sampleTime * sin(absAngle * M_PI / 180)));
 			newCurrentOffset = filter->runFilter(newCurrentOffset * 2.0, lastOffset);
-			filteredOffset = (calculatorCount < 40)? 0.0 : newCurrentOffset;
+			filteredOffset = newCurrentOffset;
 		}
 
 		//cacluate PID control output
@@ -163,7 +170,7 @@ bool SteerControl::readConfig(std::string configDirectory)
 	double newSampleTime = sampleTime;
 	double newVelocityFactor = velocityFactor;
 	double newAbsAngleLimit = absAngleLimit;
-	double newAverageNoise = 0.0;
+	double newAverageNoise = 0.1;
 	double newInitialObserved = 0.0;
 
 	//defines name of each control set
