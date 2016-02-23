@@ -1,9 +1,21 @@
+/**
+ * @file SteerControl.cpp
+ * @brief SteerControl implementation
+ * @author Hwang, Seongjae
+ * @date 2016. 02. 23.
+ */
+
 #define _USE_MATH_DEFINES
 #include<ctime>
 #include<cmath>
 #include<fstream>
 #include"SteerControl.h"
 
+/**
+ * @brief 
+ * Must be followed by readConfig() for true initialization since constructor only provides naive initialization
+ * @see SteerControl.readConfig()
+ */
 SteerControl::SteerControl()
 {
 	sampleTime = 1.0;
@@ -18,21 +30,38 @@ SteerControl::SteerControl()
 	controlAngle = 0;
 	absAngleLimit = 80;
 	calculatorCount = 0;
-	filteredOffset = 0.0;
 	lastPidOutput = 0.0;
 	filter = NULL;
 }
 
+/**
+ * @brief
+ * Does nothing unless filter is available\n
+ * To make filter available, initialize object with readConfig()
+ * @see SteerControl.readConfig()
+ */
 SteerControl::~SteerControl()
 {
 	if(filter != NULL){ delete filter; }
 }
 
+/**
+ * @parameter value
+ * Input double value
+ * @return
+ * Integer value rounded off from double
+ */
 int SteerControl::floor(double value)
 {
 	return (((int) (value * 10.0)) % 10 >= 5)? ((int) value) + 1 : (int) value;
 }
 
+/**
+ * @parameter newCurrentOffset
+ * New input value which is lateral offset from road centerline to vehicle
+ * @return
+ * Return calculated PID output value
+ */
 double SteerControl::calculatePid(double newCurrentOffset)
 {
 	//PID control factors
@@ -58,6 +87,12 @@ double SteerControl::calculatePid(double newCurrentOffset)
 	return (kp * currentOffset) + (integralTerm) + (kd * derivateError);
 }
 
+/**
+ * @parameter newPidOutput
+ * New recently calculated PID output
+ * @return
+ * MAX PID output if (newPidOuptut > MAX), MIN if (newPidOuptut < MIN)
+ */
 double SteerControl::applyLimits(double newPidOutput)
 {
 	double minOutput = velocityFactor * sampleTime * sin(- (signed int) absAngleLimit * M_PI / 180);
@@ -79,6 +114,17 @@ double SteerControl::applyLimits(double newPidOutput)
 	return pidOutput;
 }
 
+/**
+ * @brief Call getAbsAngle(), getControlAngle(), or getPidOutput() to get updated output value after calculate() called\n
+ * Filter off noise with runFilter(), if filter is available
+ * @param newCurrentOffset
+ * New input value which is lateral offset from road centerline to vehicle
+ * @return Return true if successfully updated, false if not
+ * @see SteerControl.getAbsAngle()
+ * @see SteerControl.getControlAngle()
+ * @see SteerControl.getPidOutput()
+ * @see KFilter.runFilter()
+ */
 bool SteerControl::calculate(double newCurrentOffset)
 {
 	double currentTime = clock() / (double) CLOCKS_PER_SEC;
@@ -89,16 +135,8 @@ bool SteerControl::calculate(double newCurrentOffset)
 		//filter off offset
 		if(filter != NULL)
 		{
-			//Kalman filter manually stablized by providing constant offsets
-			if(calculatorCount == 0)
-			{
-				int i;
-				for(i = 0; i < 50; i++)
-					{ filter->runFilter(lastOffset, lastOffset); }
-			}
 			//newCurrentOffset = filter->runFilter(newCurrentOffset, lastOffset - (velocityFactor * sampleTime * sin(absAngle * M_PI / 180)));
 			newCurrentOffset = filter->runFilter(newCurrentOffset * 2.0, lastOffset);
-			filteredOffset = newCurrentOffset;
 		}
 
 		//cacluate PID control output
@@ -121,6 +159,12 @@ bool SteerControl::calculate(double newCurrentOffset)
 	return true;
 }
 
+/**
+ * @brief It is also possible to tune factors in runtime
+ * @param newKp New Kp factor for PID controller
+ * @param newKi New Ki factor for PID controller
+ * @param newKd New Kd factor for PID controller
+ */
 void SteerControl::tune(double newKp, double newKi, double newKd)
 {
 	kp = newKp;
@@ -128,6 +172,10 @@ void SteerControl::tune(double newKp, double newKi, double newKd)
 	kd = newKd / sampleTime;
 }
 
+/**
+ * @brief It is also possible to tune factors in runtime
+ * @param newSampleTime New sampling interval in second
+ */
 void SteerControl::setSampleTime(double newSampleTime)
 {
 	double ratio = newSampleTime / sampleTime;
@@ -136,6 +184,12 @@ void SteerControl::setSampleTime(double newSampleTime)
 	sampleTime = newSampleTime;
 }
 
+/**
+ * @brief
+ * Maximum absolute angle would be newAbsAngleLimit\n
+ * Minimum absolute angle would be (- 1) * newAbsAngleLimit
+ * @param newAbsAngleLimit New absolute angle limits in degree (not radian)
+ */
 void SteerControl::setAbsAngleLimit(unsigned int newAbsAngleLimit)
 {
 	absAngleLimit = newAbsAngleLimit;
@@ -150,19 +204,19 @@ void SteerControl::setAbsAngleLimit(unsigned int newAbsAngleLimit)
 	else if(integralTerm > maxOutput){ integralTerm = maxOutput; }
 }
 
+/**
+ * @brief
+ * Set and initialize PID controller factors and Kalman Filter\n
+ * See Config_File_Example on documentation main page\n
+ * Omit both "Filter_XXX_..." lines not to use Kalman Filter
+ * @param configDirectory Directory of config file in string
+ * @bug
+ * Fail to read config file directory sometimes\n
+ * Probably because of string.compare() malfunctioning
+ * @return True if successfully read config file, false if not
+ */
 bool SteerControl::readConfig(std::string configDirectory)
 {
-	/*
-	 * config file consists of several "Control_Set = value" lines.
-	 * PID control section must starts with "[PIDControlSettings]", ends with "End" statement
-	 * ex)
-	 * [PIDControlSettings]
-	 * Kp=0.5
-	 * Ki=0.2
-	 * Sample_Time=0.2
-	 * End
-	 */
-
 	//factor will remain the same when config file does not contain any changes for that
 	double newKp = kp;
 	double newKi = ki;
@@ -260,26 +314,42 @@ bool SteerControl::readConfig(std::string configDirectory)
 	return true;
 }
 
+/**
+ * @brief It is also possible to tune factors in runtime
+ * @param newVelocityFactor New approximate velocity of vehicle in (camera pixel / sec)
+ */
 void SteerControl::setVelocityFactor(double newVelocityFactor)
 {
 	velocityFactor = newVelocityFactor;
 }
 
+/**
+ * @return Last updated absolute(top-view) angle from road centerline to vehicle
+ */
 int SteerControl::getAbsAngle()
 {
 	return absAngle;
 }
 
+/**
+ * @return Last updated angle change amount
+ */
 int SteerControl::getControlAngle()
 {
 	return controlAngle;
 }
 
+/**
+ * @return Last input value(filtered)
+ */
 double SteerControl::getFilteredOffset()
 {
 	return lastOffset;
 }
 
+/**
+ * @return Last updated PID output value
+ */
 double SteerControl::getPidOutput()
 {
 	return lastPidOutput;
